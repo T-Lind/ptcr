@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ptcr',
-    version='0.1.6',
+    version='0.1.7',
     author='Tiernan Lindauer',
     author_email='tiernanlind@tamu.edu',
     description='Constructs and simulates PTCR models.',
@@ -24,7 +24,8 @@ setup(
         'sympy==1.12',
         'scipy==1.13.0',
         'typing-extensions==4.9.0',
-        'tqdm==4.66.2'
+        'tqdm==4.66.2',
+        'rich==13.7.1'
     ],
     python_requires='==3.9',
     url='https://github.com/T-Lind/ptcr',
