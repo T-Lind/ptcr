@@ -2,6 +2,7 @@
 
 ### Author: T-Lind
 
+
 ## Overview
 "An important class of applications entails a robot monitoring, scrutinizing, or recording the evolution of an uncertain
 time-extended process. This sort of situation leads to an interesting family
@@ -57,6 +58,166 @@ reduces the most amount of cost, while still satisfying the constraints of the p
 distance a robot travels, reducing its wear and improving its efficiency, minimizing the amount of time it takes to
 complete a certain task.
 
+## Example Usage
+```json
+{
+  "state_names": ["I", "E", "B", "C", "D", "S"],
+  "transition_matrix": [
+    [0.0, 0.1, 0.3, 0.1, 0.2, 0.3],
+    [0.0, 0.1, 0.2, 0.1, 0.3, 0.3],
+    [0.0, 0.2, 0.1, 0.1, 0.3, 0.3],
+    [0.0, 0.1, 0.2, 0.2, 0.3, 0.2],
+    [0.0, 0.2, 0.3, 0.1, 0.1, 0.3],
+    [0.0, 0.4, 0.2, 0.2, 0.2, 0.0]
+  ],
+  "cost_matrix": [
+    [1, 5, 2, 3, 2, 1],
+    [1, 1, 5, 2, 3, 4],
+    [2, 1, 1, 1, 2, 3],
+    [3, 2, 5, 1, 1, 4],
+    [2, 5, 2, 5, 1, 4],
+    [5, 2, 3, 2, 4, 1]
+  ],
+
+  "initial_distribution": [0.0, 0.1, 0.3, 0.2, 0.2, 0.2],
+  "state_events": [
+      [[], ["e1"], ["b1"], ["c1"], ["d1"], ["s1"]],
+      [[], ["e2"], ["b2"], ["c2"], ["d2"], ["s2"]],
+      [[], ["e3"], ["b3"], ["c3"], ["d3"], ["s3"]]
+    ],
+  "single_initial_states": [
+    [[["d1", "d2"], "d12"]],
+    [[["d2", "d3"], "d23"]]
+  ],
+
+  "alphabet": ["e1", "b1", "c1", "d1", "s1", "e2", "b2", "c2", "d2", "s2", "d12", "e3", "b3", "c3", "d3", "s3", "d23"],
+
+  "plot": true,
+  "log": true
+}
+```
+
+Demonstrate capabilities:
+```python
+import json
+from timeit import default_timer as timer
+
+import numpy as np
+from scipy.stats import ttest_ind
+from tqdm import tqdm
+
+from ptcr2.fom import FOM
+
+config_file = 'samples/wedding_fom.json'
+
+with open(config_file) as f:
+    spec = json.loads(f.read())
+
+wedding_fom_cost = FOM()
+start = timer()
+wedding_fom_cost.compute_optimal_policy(spec, cost_based=True)
+end = timer()
+
+print('Time elapsed to compute cost-based optimal policy: ', end - start)
+
+wedding_fom_no_cost = FOM()
+start = timer()
+wedding_fom_no_cost.compute_optimal_policy(spec)
+end = timer()
+
+print('Time elapsed to compute no-cost optimal policy: ', end - start)
+
+# Load the two models
+wedding_fom_cost = FOM.load('saves/wedding_fom_cost.pkl')
+wedding_fom_no_cost = FOM.load('saves/wedding_fom_no_cost.pkl')
+
+# Example run
+result_no_cost = wedding_fom_no_cost.simulate_general_and_greedy_algorithms()
+print(result_no_cost)
+result_cost = wedding_fom_cost.simulate_general_and_greedy_algorithms()
+print(result_cost)
+
+# Now, simulate the algorithms across 1000 runs
+n_runs = 1_000
+
+no_cost_steps = []
+no_cost_costs = []
+
+cost_steps = []
+cost_costs = []
+
+for _ in tqdm(range(n_runs)):
+    result_no_cost = wedding_fom_no_cost.simulate()
+    no_cost_steps.append(result_no_cost['steps'])
+    no_cost_costs.append(result_no_cost['total_cost'])
+
+    result_cost = wedding_fom_cost.simulate()
+    cost_steps.append(result_cost['steps'])
+    cost_costs.append(result_cost['total_cost'])
+
+# Print 5-number summary + mean for general and greedy steps taken
+print('Costless Algorithm Steps Summary:')
+print('Min:', np.min(no_cost_steps))
+print('Q1:', np.percentile(no_cost_steps, 25))
+print('Median:', np.median(no_cost_steps))
+print('Mean:', np.mean(no_cost_steps))
+print('Q3:', np.percentile(no_cost_steps, 75))
+print('Max:', np.max(no_cost_steps))
+
+print('\nCost-Optimized Algorithm Steps Summary:')
+print('Min:', np.min(cost_steps))
+print('Q1:', np.percentile(cost_steps, 25))
+print('Median:', np.median(cost_steps))
+print('Mean:', np.mean(cost_steps))
+print('Q3:', np.percentile(cost_steps, 75))
+print('Max:', np.max(cost_steps))
+
+# Print 5-number summary + mean for general and greedy costs incurred
+print('\nCostless Algorithm Costs Summary:')
+print('Min:', np.min(no_cost_costs))
+print('Q1:', np.percentile(no_cost_costs, 25))
+print('Median:', np.median(no_cost_costs))
+print('Mean:', np.mean(no_cost_costs))
+print('Q3:', np.percentile(no_cost_costs, 75))
+print('Max:', np.max(no_cost_costs))
+
+print('\nCost-Optimized Algorithm Costs Summary:')
+print('Min:', np.min(cost_costs))
+print('Q1:', np.percentile(cost_costs, 25))
+print('Median:', np.median(cost_costs))
+print('Mean:', np.mean(cost_costs))
+print('Q3:', np.percentile(cost_costs, 75))
+print('Max:', np.max(cost_costs))
+
+alpha = 0.05
+
+# We want to check if both the number of steps and cost is lower for the cost-optimized algorithm than the costless algorithm
+t_stat, p_val = ttest_ind(cost_steps, no_cost_steps, equal_var=False, alternative='less')
+print("Performing 2-sample t-test to compare costless and cost-optimized algorithms:")
+print('T-Statistic:', t_stat)
+print('P-Value:', p_val)
+
+if p_val < alpha:
+    print(
+        'Reject the null hypothesis: The cost-optimized algorithm is significantly lower in steps than the costless algorithm.')
+else:
+    print(
+        'Fail to reject the null hypothesis: The cost-optimized algorithm is not significantly lower in steps than the costless algorithm.')
+
+# Perform an independent 2-sample t-test to determine if the cost-optimized algorithm is significantly lower in cost than the costless algorithm
+t_stat, p_val = ttest_ind(cost_costs, no_cost_costs, equal_var=False, alternative='less')
+print("\nPerforming 2-sample t-test to compare costless and cost-optimized algorithms:")
+print('T-Statistic:', t_stat)
+print('P-Value:', p_val)
+
+if p_val < alpha:
+    print(
+        'Reject the null hypothesis: The cost-optimized algorithm is significantly lower in cost than the costless algorithm.')
+else:
+    print(
+        'Fail to reject the null hypothesis: The cost-optimized algorithm is not significantly lower in cost than the costless algorithm.')
+```
+
 ## Questions?
 
 If you have any questions, feel free to reach out to me at [tiernanlind@tamu.edu](mailto:tiernanlind@tamu.edu).
@@ -64,4 +225,6 @@ If you have any questions, feel free to reach out to me at [tiernanlind@tamu.edu
 ## Acknowledgements
 
 Dylan A. Shell
+
+
 Hazhar Rahmani
