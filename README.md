@@ -1,18 +1,32 @@
-# Exploring Alternative Cost Mechanisms for Probabilistic Planning
+# Probabilistic Planning for Optimal Policies
 
 ### Author: T-Lind
 
+## Introduction
+This project, developed by T-Lind, is an implementation and extension of the work by Dylan A. Shell and Hazhar Rahmani on optimal policies for narrative observation of unpredictable events. It focuses on scenarios where a robot, or any observer, has to monitor an uncertain process over time, choosing what to pay attention to based on a set of constraints.
+
+The project introduces a cost-based optimization approach, where the optimal policy is the one that reduces the most amount of cost while still satisfying the constraints of the problem. This could mean minimizing the distance a robot travels, reducing its wear and improving its efficiency, or minimizing the amount of time it takes to complete a certain task.
+
+The cost is implemented in a matrix, so that the transition from state to state in the model incurs a certain cost. This is then paired with an optimization algorithm that factors in the state-state optimization, allowing the robot to minimize the cost it incurs while still satisfying the constraints of the problem.
+
+This project is useful for developers and researchers working on robotics, automation, and any field where decision-making under uncertainty is crucial. It provides a practical approach to probabilistic planning, with a focus on cost optimization.
 
 ## Overview
+This work implements and extends the work of Dylan A. Shell and Hazhar Rahmani in their paper ["Planning to chronicle: Optimal policies for narrative observation of unpredictable events"](https://journals.sagepub.com/doi/pdf/10.1177/02783649211069154).
+An excerpt from the paper is as follows:
+
 "An important class of applications entails a robot monitoring, scrutinizing, or recording the evolution of an uncertain
 time-extended process. This sort of situation leads to an interesting family
-of planning problems in which the robot is limited in what it sees and must, thus, choose what to pay attention to. The distinguishing characteristic of this setting is that the robot has influence over what it  captures via its sensors, but exercises no causal authority over the evolving process. As such, the robot’s objective is to observe the underlying process and to produce a ‘chronicle’ of occurrent events, subject to a
+of planning problems in which the robot is limited in what it sees and must, thus, choose what to pay attention to.
+The distinguishing characteristic of this setting is that the robot has influence over what it  captures via its sensors,
+but exercises no causal authority over the evolving process. As such, the robot's objective is to observe the underlying
+process and to produce a 'chronicle' of current events, subject to a
 goal specification of the sorts of event sequences that may be of interest.
 This paper examines variants of such problems when the robot aims to
 collect sets of observations to meet a rich specification of their sequential structure. We study this class of problems by modeling a stochastic
 process via a variant of a hidden Markov model, and specify the event
-sequences of interest as a regular language, developing a vocabulary of
-‘mutators’ that enable sophisticated requirements to be expressed. Under different suppositions about the information gleaned about the event
+sequences of interest as a regular language, developing a vocabulary of 'mutators'
+that enable sophisticated requirements to be expressed. Under different suppositions about the information gleaned about the event
 model, we formulate and solve different planning problems. The core underlying idea is the construction of a product between the event model
 and a specification automaton.
 
@@ -22,11 +36,11 @@ crummy specimens of the cinematic arts. They fail, generally, to establish and
 then bracket a scene; they often founder in emphasizing the importance of key
 subjects within the developing action, and are usually unsuccessful in attempts
 to trace an evolving narrative arc. And the current generation of autonomous
-personal robots and video drones, in their roles as costly and glorified ‘selfie
-sticks,’ are set to follow suit. The trouble is that capturing footage to tell a story
+personal robots and video drones, in their roles as costly and glorified 'selfie sticks'
+are set to follow suit. The trouble is that capturing footage to tell a story
 is challenging. A camera can only record what you point it toward, so part of
-the difficulty stems from the fact that you can’t know exactly how the scene will
-unfold before it actually does. Moreover, what constitutes structure isn’t easily
+the difficulty stems from the fact that you can't know exactly how the scene will
+unfold before it actually does. Moreover, what constitutes structure isn't easily
 summed up with a few trite quantities. Another part of the challenge, of course,
 is that one has only limited time to capture video footage.
 Setting aside pure vanity as a motivator, many applications can be cast as
@@ -58,7 +72,23 @@ reduces the most amount of cost, while still satisfying the constraints of the p
 distance a robot travels, reducing its wear and improving its efficiency, minimizing the amount of time it takes to
 complete a certain task.
 
+This "cost" is implemented in a matrix, so that the transition from state to state in the model incurs a certain cost.
+This is then paired with an optimization algorithm that factors in the state-state optimization, such that the robot
+can minimize the cost it incurs while still satisfying the constraints of the problem. This could be described as a 
+"navigation" cost.
+
+
+
 ## Example Usage
+In the example usage below, the state names must be specified as strings inside of a list, like seen below.
+The transition matrix then must be square of the size of the state names; the row is "from" and the column is "to".
+This represents probabilities in the model, so each row should sum up to 1.0. The cost matrix is also square, and
+represents the cost of transitioning from one state to another as described above. Note that the costs could be from any
+range, but should be consistent across the matrix. The initial distribution is the probability of starting in each state,
+and should sum up to 1.0. The state events are the events that can occur in each state, and should be specified as a list
+of lists of strings. The single initial states are the states that the robot can start in, and should be specified as a
+list of lists of lists, where the innermost list is the state and the outermost list is the initial state. The alphabet is
+the list of all possible events that can occur in the model.
 ```json
 {
   "state_names": ["I", "E", "B", "C", "D", "S"],
@@ -91,10 +121,6 @@ complete a certain task.
   ],
 
   "alphabet": ["e1", "b1", "c1", "d1", "s1", "e2", "b2", "c2", "d2", "s2", "d12", "e3", "b3", "c3", "d3", "s3", "d23"],
-
-  "plot": true,
-  "log": true
-}
 ```
 
 Demonstrate capabilities:

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ptcr',
-    version='0.1.7',
+    version='0.1.10',
     author='Tiernan Lindauer',
     author_email='tiernanlind@tamu.edu',
     description='Constructs and simulates PTCR models.',
